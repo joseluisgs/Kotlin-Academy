@@ -1,5 +1,5 @@
 # Kotlin Academy
-Mis experimentos con Kotlin para JetBrains donde voy resolviendo proyectos de evaluación y haciendo actividades de cada tema.
+Mis experimentos con Kotlin para JetBrains Academy, certificación de Kotlin donde voy resolviendo proyectos de evaluación y haciendo actividades de cada tema.
 
 [![Kotlin](https://img.shields.io/badge/Code-Kotlin-blueviolet)](https://kotlinlang.org/)
 [![LISENCE](https://img.shields.io/badge/Lisence-MIT-green)]()
