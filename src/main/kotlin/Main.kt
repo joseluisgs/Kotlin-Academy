@@ -1,23 +1,31 @@
-import java.io.File
+// Fix this function
+fun main() {
+    val str: String = readLine()!!
+    val processor = SlowStringProcessor(str)
+    processor.start()
+    processor.join()
+    println(processor.numberOfUniqueCharacters)
+}
 
-fun main(args: Array<String>) {
-    val find = File("src/find.txt").readLines()
-    val directory = File("src/directory.txt").readLines()
+// do not change the code below
 
-    val entries = find.size
-    var found = 0
+val mainThreadId = Thread.currentThread().id
 
-    println("Start searching...")
-    val timeStart = System.currentTimeMillis()
-    for (i in 0 until entries) {
-        for (element in directory) {
-            if (find[i] in element) {
-                found++
-            }
+class SlowStringProcessor(val s: String) : Thread() {
+    @Volatile
+    var numberOfUniqueCharacters: Int = 0
+        private set
+
+    override fun run() {
+        val currentId = currentThread().id
+        if (currentId == mainThreadId) {
+            throw RuntimeException("You must start a new thread!")
         }
+        try {
+            sleep(2000)
+        } catch (e: Exception) {
+            throw RuntimeException("Do not interrupt the processor", e)
+        }
+        numberOfUniqueCharacters = s.split("").filter { it != "" }.toTypedArray().distinct().size
     }
-    val timeEnd = System.currentTimeMillis()
-    print("Found $found / $entries entries. ")
-    print("Time taken: " + String.format("%1\$tM min. %1\$tS sec. %1\$tL ms.", (timeEnd - timeStart)))
-
 }

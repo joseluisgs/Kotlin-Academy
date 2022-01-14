@@ -35,7 +35,7 @@ fun converterNumberDecimal(sourceBase: Int, targetBase: Int) {
     print("Enter number in base $sourceBase to convert to base $targetBase (To go back type /back) ")
     val input = readln()
     if (input != "/back") {
-        if (input.indexOf(".") != -1 ) {
+        if (input.indexOf(".") != -1) {
             val integerPart = input.split(".")[0]
             val decimalPart = input.split(".")[1]
             // println("integerPart: $integerPart")
@@ -44,7 +44,7 @@ fun converterNumberDecimal(sourceBase: Int, targetBase: Int) {
             val integerValuePartBase = BigInteger(integerPart, sourceBase).toString(targetBase)
             // Obtengo la parte decimal en sistema decimal
             val decimalValuePartDecimal = getDecimalPartfromBase(decimalPart, sourceBase)
-                // .setScale(5, BigDecimal.ROUND_HALF_UP).toString().substring(2)
+            // .setScale(5, BigDecimal.ROUND_HALF_UP).toString().substring(2)
             // println("decimalValuePartDecimal: $decimalValuePartDecimal")
             val decimalValuePartTarget = getDecimalToTarget(decimalValuePartDecimal, targetBase)
             println("Conversion result: $integerValuePartBase.$decimalValuePartTarget")
@@ -62,13 +62,13 @@ fun converterNumberDecimal(sourceBase: Int, targetBase: Int) {
  * @param decimalPart the decimal part of the number
  * @param sourceBase the base of the number
  */
-fun getDecimalPartfromBase(decimalPart: String, sourceBase: Int): BigDecimal{
+fun getDecimalPartfromBase(decimalPart: String, sourceBase: Int): BigDecimal {
     // println("Decimal Part: $decimalPart")
     var decimal = BigDecimal(0)
-    for (i in decimalPart.indices){
+    for (i in decimalPart.indices) {
         val base = decimalPart.substring(i, i + 1)
         val digit = BigInteger(base, sourceBase).toString(10)
-        val exp = - (i + 1)
+        val exp = -(i + 1)
         // println("Base: $base Exp: $exp")
         // println("Digit: $digit Exp: $exp")
         val tmp = digit.toBigDecimal() * (sourceBase.toDouble().pow(exp.toDouble())).toBigDecimal()
@@ -157,7 +157,7 @@ fun mainMenu() {
             "/exit" -> exit()
             else -> println("Invalid option")
         }
-    } while(!options.contains(option) || option != "/exit")
+    } while (!options.contains(option) || option != "/exit")
 }
 
 /**
