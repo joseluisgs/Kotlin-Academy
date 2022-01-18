@@ -1,96 +1,163 @@
 package calculator
 
-import kotlin.system.exitProcess
+import java.math.BigInteger
+import java.util.*
+
+// Global vals and funcs.
+private val NUMBERS = mutableMapOf<String, BigInteger>() // Lista de variables
+private val STACK = Stack<BigInteger>() // Pila de operandos
+private val ERROR = Error()  // Objeto de error
 
 fun main() {
-    var line = ""
-    do {
-        line = readln().trim()
-        if (line.isNotEmpty()) {
-            when  {
-                // Commands
-                line == "/exit" -> exitProgram()
-                line == "/help" -> helpProgram()
-                "\\/".toRegex().containsMatchIn(line) -> {
-                    println("Unknown command")
-                }
-                else -> processor(line)
-            }
+    // Leemos la entrada
+    var input = readln()
+    // Mietras no exit
+    while (input != "/exit") {
+        if (input != "") {
+            // Si es una operacion
+            if (input[0] != '/') {
+                // Si tiene el igual es que es una variable, si no vamos a calcular
+                if (input.contains('=')) memoryAdd(input) else calculate(postfixFrom(input))
+            } else command(input)
         }
-    } while (true)
+        // Volvemos a leer
+        input = readln()
+        // Limpiamos la pila y los errores
+        if (STACK.isNotEmpty()) STACK.clear()
+        if (ERROR.triggered()) ERROR.reset()
+    }
+    println("Bye!")
 }
 
 /**
- * Help program
+ * Añade una variable de memoria
  */
-fun helpProgram() {
-    println("This program calculates expressions of additions and subtractions")
-}
-
-/**
- * Processes the input line.
- * @param line the input line
- */
-fun processor(line: String) {
-    val tokens = line.split(" ").filter { it.isNotEmpty() }
-    when (tokens.size) {
-        2 -> {
-            println("Invalid input")
+private fun memoryAdd(value: String) {
+    val values = value.replace(" ", "").split('=').toTypedArray()
+    // Solo letras
+    val sequence: CharRange = 'a'..'z'
+    if (values.size > 2) ERROR.invalidAssign() else {
+        for (char in values[0]) if (!sequence.contains(char.toLowerCase())) {
+            ERROR.invalidID()
             return
         }
-        else -> {
-        val result = mutableListOf<Int>()
-        var i = 0
-        while (i < tokens.size) {
-            // println(tokens[i])
-            if (tokens[i].isNotEmpty()) {
-                // Analizamos todos los tokens
-                if (tokens[i].toIntOrNull() == null) {
-                    // No lo podemos convertir
-                    try {
-                        val signus = analyzeSignus(tokens[i])
-                        result.add(signus * tokens[i + 1].toInt())
-                        i += 2
-                    } catch (e: Exception) {
-                        println("Invalid expression")
-                        return
+        // Vemos si es un número lo que hay detras
+        when {
+            isNumber(values[1]) -> NUMBERS[values[0]] = values[1].toBigInteger()
+            memoryGet(values[1]) != null -> NUMBERS[values[0]] = memoryGet(values[1]) ?: 0.toBigInteger()
+            else -> ERROR.invalidAssign()
+        }
+    }
+}
+
+/**
+ * Calcula una expresión a partir de postfix
+ * @param postfix La expresión en postfix
+ */
+private fun calculate(postfix: Array<String>) {
+    if (postfix.isNotEmpty()) {
+        for (element in postfix) {
+            // Si es un signos, sacamos de la pila los dos ultimos valores y los operamos
+            when (element) {
+                "+", "-", "*", "/", "^" -> {
+                    val num2 = STACK.pop()
+                    val num1 = STACK.pop()
+                    // Sacamos el elemento
+                    when (element) {
+                        "+", "-", "*" -> operation(element[0], num1, num2)
+                        "/" -> divide(num1, num2)
+                        "^" -> exponent(num1, num2)
                     }
-                } else {
-                    // Lo podemos convertir
-                    result.add(tokens[i].toInt())
-                    i++
                 }
+                else -> pushNumber(element)
             }
+            if (ERROR.triggered()) return
         }
-        // println(result)
-        println(result.sum())
+        println(STACK.last())
+    }
+}
+
+/**
+ * Es un camando conocido
+ * @param command El comando
+ */
+private fun command(command: String) = if (command == "/help") help() else ERROR.unknownCMD()
+
+/**
+ * Es un numero
+ * @param number El numero
+ * @return Si es un numero
+ */
+private fun isNumber(number: String) = number.toBigIntegerOrNull() != null
+
+/**
+ * Existe en la memoria
+ * @param value El valor
+ * @return El valor si existe
+ */
+private fun memoryGet(value: String): BigInteger? = if (NUMBERS.containsKey(value)) NUMBERS[value] else null
+
+/**
+ * Operaciones
+ * @param operation La operacion
+ * @param num1 El primer numero
+ * @param num2 El segundo numero
+ */
+private fun operation(op: Char, num1: BigInteger, num2: BigInteger) {
+    try {
+        var result = num1
+        when (op) {
+            '+' -> result += num2
+            '*' -> result *= num2
+            '-' -> result -= num2
+        }
+        STACK.push(result)
+    } catch (e: ArithmeticException) {
+        ERROR.calcTooLarge()
+    }
+}
+
+/**
+ * Divide
+ * @param num1 El primer numero
+ * @param num2 El segundo numero
+ */
+private fun divide(num1: BigInteger, num2: BigInteger) {
+    if (num2 == 0.toBigInteger()) ERROR.zeroDiv() else STACK.push((num1 / num2))
+}
+
+/**
+ * Exponente
+ * @param num1 El primer numero
+ * @param num2 El segundo numero
+ */
+private fun exponent(num1: BigInteger, num2: BigInteger) {
+    when {
+        num2 < 0.toBigInteger() -> ERROR.negExponent()
+        num2 > Int.MAX_VALUE.toBigInteger() -> ERROR.calcTooLarge()
+        else -> try {
+            val result = num1.pow(num2.toInt())
+            STACK.push(result)
+        } catch (e: ArithmeticException) {
+            ERROR.calcTooLarge()
         }
     }
 }
 
 /**
- * Analyzes the signus.
+ * Ponemos el numero,s i no lo buscamos de la pila
  */
-fun analyzeSignus(simbols: String): Int {
-    if (simbols == "+") {
-        return 1
-    } else if (simbols == "-") {
-        return -1
-    } else {
-        val veces = simbols.count { it == '-' }
-        return when {
-            veces == 0 -> return 1
-            veces % 2 == 0 -> return 1
-            else -> return -1
-        }
-    }
+private fun pushNumber(string: String) {
+    val num: BigInteger? = if (isNumber(string)) string.toBigInteger() else memoryGet(string)
+    if (num == null) ERROR.unknownVar() else STACK.push(num)
 }
 
 /**
- * Exits the program.
+ * Muestra la ayuda
  */
-fun exitProgram() {
-    println("Bye!")
-    exitProcess(0)
+private fun help() {
+    println(
+        "The program can add, subtract, multiply, and divide numerous very large whole numbers, save values and" +
+                " supports exponentiation. Example:\na = 3\nb = 2\na + 8 * ((4 + a ^ b) * b + 1) - 6 / (b + 1)"
+    )
 }
-

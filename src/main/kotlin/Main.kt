@@ -1,10 +1,13 @@
+import kotlin.math.sqrt
+
 // Fix this function
 fun main() {
-    val str: String = readLine()!!
-    val processor = SlowStringProcessor(str)
-    processor.start()
-    processor.join()
-    println(processor.numberOfUniqueCharacters)
+    val a = readln().toDouble()
+    val b = readln().toDouble()
+    val c = readln().toDouble()
+    val p = (a + b + c) / 2
+    val area = sqrt(p * (p - a) * (p - b) * (p - c))
+    println(area)
 }
 
 // do not change the code below
